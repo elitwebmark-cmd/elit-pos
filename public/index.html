@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Перевірка позицій elit-web.ua</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="wrap">
+  <header class="head">
+    <div class="eyebrow">Elit-Web · SEO-моніторинг</div>
+    <h1>Перевірка позицій <span class="nowrap">elit-web.ua</span></h1>
+    <p class="lead">Перевірте 5 запитів двічі: на смартфоні через мобільний інтернет і на комп’ютері через звичайний (дротовий / Wi‑Fi) інтернет. Займе близько 10 хвилин.</p>
+  </header>
+
+  <section class="rule" aria-labelledby="ruleTitle">
+      <div class="rule-head">
+        <span class="rule-icon" aria-hidden="true">!</span>
+        <div>
+          <h2 id="ruleTitle">Рахуйте лише звичайні результати пошуку</h2>
+          <p><b>Рекламу, карти, «Люди також питають», відео та картинки пропускайте.</b> Це найважливіше правило: якщо їх порахувати, позиція буде неправильною.</p>
+        </div>
+      </div>
+      <div class="rule-body">
+        <div class="rule-col no">
+          <h3>✗ Не рахуємо</h3>
+          <ul>
+            <li>Рекламу з позначкою «Спонсоровано» / «Реклама»</li>
+            <li>Карти і список компаній на карті</li>
+            <li>Блок «Люди також питають»</li>
+            <li>Відео, картинки, новини</li>
+          </ul>
+          <h3 style="margin-top:12px" class="yes-h">✓ Рахуємо</h3>
+          <ul><li>Лише звичайні сайти зі списку результатів</li></ul>
+        </div>
+        <div class="rule-col">
+          <h3>Приклад</h3>
+          <ol class="serp" aria-label="Приклад видачі">
+            <li class="skip"><span class="n">—</span>Спонсоровано · ads-agency.ua</li>
+            <li class="skip"><span class="n">—</span>Карти · 3 компанії</li>
+            <li><span class="n">1</span>seo-studio.com.ua</li>
+            <li class="skip"><span class="n">—</span>Люди також питають</li>
+            <li><span class="n">2</span>webpromo.ua</li>
+            <li class="skip"><span class="n">—</span>Відео · YouTube</li>
+            <li class="target"><span class="n">3</span>elit-web.ua → вписуємо 3</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+  <details class="card howto" open>
+    <summary>Як перевіряти — прочитайте перед початком</summary>
+    <ol>
+      <li><b>Режим інкогніто</b> (Chrome → «Нове вікно в режимі інкогніто»), щоб історія пошуку не впливала на видачу.</li>
+      <li>Відкрийте <b>google.com.ua</b>, нічого не змінюйте в налаштуваннях і <b>не вмикайте VPN</b>.</li>
+      <li>Введіть запит <b>точно як у формі</b> і знайдіть перший результат із сайтом <b>elit-web.ua</b>.</li>
+      <li>Переглядайте <b>перші 3 сторінки</b> (≈ ТОП‑30). Якщо сайту немає — позначте «Немає в ТОП‑30».</li>
+      <li><b>Мобільна видача</b> — зі смартфона, Wi‑Fi вимкнено (лише мобільний інтернет). <b>ПК</b> — з комп’ютера.</li>
+    </ol>
+  </details>
+
+  <form id="form" novalidate>
+    <section class="card">
+      <h2>Хто перевіряє</h2>
+      <div class="grid2">
+        <label class="field">
+          <span>Ваше ім’я та прізвище</span>
+          <input name="employee" autocomplete="name" required placeholder="Олена Коваль">
+        </label>
+        <label class="field">
+          <span>Обласний центр, з якого перевіряєте</span>
+          <select name="citySelect" required></select>
+        </label>
+      </div>
+    </section>
+
+    <section class="card device" data-device="mobile">
+      <div class="dev-head">
+        <span class="dev-icon" aria-hidden="true">📱</span>
+        <div>
+          <h2>Мобільна видача</h2>
+          <p class="muted">Смартфон · мобільний інтернет (Wi‑Fi вимкнено)</p>
+        </div>
+        <span class="counter" data-counter="mobile">0/5</span>
+      </div>
+      <p class="reminder">! Рекламу, карти, «Люди також питають», відео та картинки не рахуємо</p>
+      <div class="rows" data-rows="mobile"></div>
+    </section>
+
+    <section class="card device" data-device="desktop">
+      <div class="dev-head">
+        <span class="dev-icon" aria-hidden="true">💻</span>
+        <div>
+          <h2>Видача на ПК</h2>
+          <p class="muted">Комп’ютер · браузер · звичайний інтернет</p>
+        </div>
+        <span class="counter" data-counter="desktop">0/5</span>
+      </div>
+      <p class="reminder">! Рекламу, карти, «Люди також питають», відео та картинки не рахуємо</p>
+      <div class="rows" data-rows="desktop"></div>
+    </section>
+
+    <section class="card">
+      <label class="field">
+        <span>Коментар (необов’язково)</span>
+        <textarea name="comment" rows="3" placeholder="Щось незвичне у видачі, браузер, оператор зв’язку…"></textarea>
+      </label>
+    </section>
+
+    <div class="submit-bar">
+      <p class="muted small" id="draftNote">Чернетка зберігається на цьому пристрої — можна заповнювати частинами.</p>
+      <button type="submit" class="btn" id="submitBtn">Надіслати результати</button>
+      <p class="error" id="formError" role="alert"></p>
+    </div>
+  </form>
+
+  <section class="card done hidden" id="done">
+    <div class="done-icon">✓</div>
+    <h2>Дякуємо! Результати збережено.</h2>
+    <p class="muted">Якщо ви помилились — надішліть форму ще раз, в статистиці враховується останній запис з вашого міста.</p>
+    <button class="btn ghost" id="again" type="button">Заповнити ще раз</button>
+  </section>
+</main>
+
+<template id="rowTpl">
+  <div class="row">
+    <div class="q"></div>
+    <div class="inputs">
+      <label class="pos">
+        <span class="sr">Позиція</span>
+        <input type="number" inputmode="numeric" min="1" max="30" placeholder="№">
+      </label>
+      <label class="nf">
+        <input type="checkbox">
+        <span>Немає в ТОП‑30</span>
+      </label>
+    </div>
+  </div>
+</template>
+
+<script src="/form.js"></script>
+</body>
+</html>
