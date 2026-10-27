@@ -90,11 +90,15 @@ app.get('/api/config', (_req, res) => {
 app.post('/api/submit', async (req, res) => {
   const body = req.body || {};
   const employee = String(body.employee || '').trim().slice(0, 120);
-  const city = String(body.city || '').trim().slice(0, 80);
+  let city = String(body.city || '').trim().replace(/\s+/g, ' ').slice(0, 60);
   const comment = String(body.comment || '').trim().slice(0, 1000) || null;
 
   if (!employee) return res.status(400).json({ error: 'Вкажіть ім’я' });
-  if (!CITIES.includes(city)) return res.status(400).json({ error: 'Оберіть місто зі списку' });
+  // місто зі списку або вписане вручну («Інше місто»)
+  const known = CITIES.find((c) => c.toLowerCase() === city.toLowerCase());
+  if (known) city = known;
+  else if (body.otherCity && /^[\p{L}][\p{L}\s'’ʼ.-]{1,59}$/u.test(city)) city = city.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (m, sep, ch) => sep + ch.toUpperCase()); // «кривий ріг» → «Кривий Ріг»
+  else return res.status(400).json({ error: body.otherCity ? 'Вкажіть назву міста літерами' : 'Оберіть місто зі списку' });
 
   const rows = [];
   for (const device of DEVICES) {

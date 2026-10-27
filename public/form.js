@@ -5,14 +5,23 @@
   const btn = document.getElementById('submitBtn');
   const tpl = document.getElementById('rowTpl');
   const citySelect = form.citySelect;
+  const otherWrap = document.getElementById('cityOtherWrap');
+  const OTHER = '__other';
 
   const cfg = await fetch('/api/config').then((r) => r.json());
   const { queries, cities, maxPosition } = cfg;
 
   // Міста
   citySelect.innerHTML = '<option value="">— оберіть місто —</option>' +
-    cities.map((c) => `<option>${c}</option>`).join('');
-  citySelect.addEventListener('change', saveDraft);
+    cities.map((c) => `<option>${c}</option>`).join('') +
+    `<option value="${OTHER}">Інше місто…</option>`;
+  function toggleOther() {
+    const on = citySelect.value === OTHER;
+    otherWrap.classList.toggle('hidden', !on);
+    if (on && !form.cityOther.value) form.cityOther.focus();
+  }
+  citySelect.addEventListener('change', () => { toggleOther(); saveDraft(); });
+  form.cityOther.addEventListener('input', saveDraft);
 
   // Рядки запитів
   const rowsByDevice = { mobile: [], desktop: [] };
@@ -60,6 +69,7 @@
     return {
       employee: form.employee.value.trim(),
       citySelect: citySelect.value,
+      cityOther: form.cityOther.value.trim(),
       comment: form.comment.value.trim(),
       results,
     };
@@ -74,7 +84,9 @@
     try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch (_) {}
     if (!d) return;
     form.employee.value = d.employee || '';
-    if (cities.includes(d.citySelect)) citySelect.value = d.citySelect;
+    if (cities.includes(d.citySelect) || d.citySelect === OTHER) citySelect.value = d.citySelect;
+    form.cityOther.value = d.cityOther || '';
+    otherWrap.classList.toggle('hidden', citySelect.value !== OTHER);
     form.comment.value = d.comment || '';
     for (const dev of ['mobile', 'desktop']) {
       for (const r of rowsByDevice[dev]) {
@@ -104,12 +116,13 @@
     document.querySelectorAll('.invalid').forEach((el) => el.classList.remove('invalid'));
 
     const data = collect();
-    const city = data.citySelect;
+    const isOther = data.citySelect === OTHER;
+    const city = isOther ? data.cityOther : data.citySelect;
     let firstBad = null;
     const mark = (el) => { el.classList.add('invalid'); firstBad = firstBad || el; };
 
     if (!data.employee) mark(form.employee);
-    if (!city) mark(citySelect);
+    if (!city) mark(isOther ? form.cityOther : citySelect);
     for (const d of ['mobile', 'desktop']) {
       for (const r of rowsByDevice[d]) if (!rowFilled(r)) mark(r.node);
     }
@@ -125,7 +138,7 @@
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employee: data.employee, city, comment: data.comment, results: data.results }),
+        body: JSON.stringify({ employee: data.employee, city, otherCity: isOther, comment: data.comment, results: data.results }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || 'Помилка сервера');
