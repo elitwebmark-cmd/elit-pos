@@ -150,3 +150,7 @@ td.left, th.left { text-align: left; }
 .link-btn.danger { color: var(--err); }
 .empty { text-align: center; padding: 40px 0; color: var(--muted); }
 a { color: var(--accent); }
+
+.pos-chip.diff { outline: 2px dashed var(--warn); outline-offset: 1px; }
+.legend i.diff-key { border: 2px dashed var(--warn); }
+.matrix tr.grp-start td { border-top: 2px solid var(--line); }

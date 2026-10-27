@@ -18,7 +18,7 @@
     if (v <= 20) return 'b3';
     return 'b4';
   }
-  const chip = (v, title) => `<span class="pos-chip ${bucket(v)}"${title ? ` title="${esc(title)}"` : ''}>${v == null ? '×' : fmtPos(v)}</span>`;
+  const chip = (v, title, diff) => `<span class="pos-chip ${bucket(v)}${diff ? ' diff' : ''}"${diff ? ' title="Розбіжність між співробітниками цього міста"' : ''}${title ? ` title="${esc(title)}"` : ''}>${v == null ? '×' : fmtPos(v)}</span>`;
 
   async function load() {
     const res = await fetch('/api/stats', { credentials: 'same-origin' });
@@ -35,36 +35,59 @@
     });
   }
 
-  // місто -> { mobile: {q: value}, desktop: {...}, meta }
-  function perCity(subs) {
+  const normName = (n) => String(n || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const DIFF = 5; // розбіжність між співробітниками одного міста, позицій
+
+  // співробітник у місті -> позиції (останній запис або середнє по його записах)
+  function perPerson(subs) {
     const mode = $('mode').value;
     const groups = new Map();
     for (const s of subs) {
-      if (!groups.has(s.city)) groups.set(s.city, []);
-      groups.get(s.city).push(s); // subs уже відсортовані: новіші першими
+      const key = s.city + '|' + normName(s.employee);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(s); // subs уже відсортовані: новіші першими
     }
     const out = [];
-    for (const [city, list] of groups) {
-      const row = { city, count: list.length, last: list[0], mobile: {}, desktop: {} };
+    for (const list of groups.values()) {
+      const row = { city: list[0].city, employee: list[0].employee, count: list.length, last: list[0], mobile: {}, desktop: {} };
       for (const d of DEV) {
         for (const q of data.queries) {
-          if (mode === 'latest') {
-            const r = list[0].results[d][q] || {};
-            row[d][q] = r.position ?? null;
-          } else {
-            const vals = list.map((s) => s.results[d][q]?.position).filter((v) => v != null);
-            row[d][q] = mean(vals);
-          }
+          if (mode === 'latest') row[d][q] = list[0].results[d][q]?.position ?? null;
+          else row[d][q] = mean(list.map((s) => s.results[d][q]?.position).filter((v) => v != null));
         }
       }
       out.push(row);
     }
-    return out.sort((a, b) => a.city.localeCompare(b.city, 'uk'));
+    return out.sort((a, b) => a.city.localeCompare(b.city, 'uk') || a.employee.localeCompare(b.employee, 'uk'));
+  }
+
+  // місто -> середнє по співробітниках міста (для KPI і зведення по запитах)
+  function perCity(people) {
+    const groups = new Map();
+    for (const p of people) {
+      if (!groups.has(p.city)) groups.set(p.city, []);
+      groups.get(p.city).push(p);
+    }
+    return [...groups].map(([city, list]) => {
+      const row = { city, people: list, mobile: {}, desktop: {} };
+      for (const d of DEV) for (const q of data.queries) row[d][q] = mean(list.map((p) => p[d][q]).filter((v) => v != null));
+      return row;
+    });
+  }
+
+  // чи розходяться співробітники одного міста по цій клітинці
+  function isDiff(list, d, q) {
+    if (list.length < 2) return false;
+    const vals = list.map((p) => p[d][q]);
+    const found = vals.filter((v) => v != null);
+    if (found.length && found.length < vals.length) return true;
+    return found.length > 1 && Math.max(...found) - Math.min(...found) >= DIFF;
   }
 
   function render() {
     const subs = filtered();
-    const cities = perCity(subs);
+    const people = perPerson(subs);
+    const cities = perCity(people);
     const Q = data.queries;
 
     $('subtitle').textContent = data.submissions.length
@@ -81,7 +104,7 @@
     }
     const k = (label, value, sub) => `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`;
     $('kpis').innerHTML =
-      k('Міст охоплено', cities.length, `${subs.length} відповідей`) +
+      k('Міст охоплено', cities.length, `${people.length} співробітн. · ${subs.length} відповідей`) +
       k('📱 Сер. позиція', fmtPos(mean(cells.mobile)), `знайдено ${cells.mobile.length} з ${cities.length * Q.length}`) +
       k('💻 Сер. позиція', fmtPos(mean(cells.desktop)), `знайдено ${cells.desktop.length} з ${cities.length * Q.length}`) +
       k('У ТОП‑10', total ? Math.round((top10 / total) * 100) + '%' : '—', `${top10} з ${total} перевірок`);
@@ -110,15 +133,18 @@
       }
       $('byQuery').innerHTML = h + '</tbody>';
 
-      // Матриця
-      let m = `<thead><tr><th class="left" rowspan="2">Місто</th>${Q.map((q) => `<th class="qh" colspan="2">${esc(q)}</th>`).join('')}</tr>
+      // Матриця: окремий рядок на кожного співробітника, згруповано по містах
+      let m = `<thead><tr><th class="left" rowspan="2">Місто · співробітник</th>${Q.map((q) => `<th class="qh" colspan="2">${esc(q)}</th>`).join('')}</tr>
         <tr>${Q.map(() => `<th class="qh">📱</th><th>💻</th>`).join('')}</tr></thead><tbody>`;
-      for (const c of cities) {
-        m += `<tr><td class="city left">${esc(c.city)}<div class="meta">${esc(c.last.employee)} · ${fmtDate(c.last.created_at)}${c.count > 1 ? ` · ${c.count} зап.` : ''}</div></td>`;
-        for (const q of Q) {
-          m += `<td class="m">${chip(c.mobile[q])}</td><td>${chip(c.desktop[q])}</td>`;
-        }
-        m += '</tr>';
+      for (const c of cities.sort((a, b) => a.city.localeCompare(b.city, 'uk'))) {
+        c.people.forEach((p, i) => {
+          m += `<tr class="${i === 0 ? 'grp-start' : ''}"><td class="city left">${esc(c.city)}${c.people.length > 1 ? ` <span class="meta">· ${i + 1}/${c.people.length}</span>` : ''}
+            <div class="meta">${esc(p.employee)} · ${fmtDate(p.last.created_at)}${p.count > 1 ? ` · ${p.count} зап.` : ''}</div></td>`;
+          for (const q of Q) {
+            m += `<td class="m">${chip(p.mobile[q], null, isDiff(c.people, 'mobile', q))}</td><td>${chip(p.desktop[q], null, isDiff(c.people, 'desktop', q))}</td>`;
+          }
+          m += '</tr>';
+        });
       }
       $('matrix').innerHTML = m + '</tbody>';
     }
