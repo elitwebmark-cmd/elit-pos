@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Прогони перевірки позицій</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="wrap wide">
+  <nav class="nav" aria-label="Розділи">
+    <a href="/stats">Статистика</a>
+    <a href="/admin" aria-current="page">Прогони</a>
+    <span class="spacer"></span>
+    <a href="/" target="_blank">Форма ↗</a>
+  </nav>
+
+  <header class="head">
+    <div class="eyebrow">Elit-Web · SEO-моніторинг</div>
+    <h1>Прогони перевірки</h1>
+    <p class="lead">Прогін — одне коло перевірки. Форма для співробітників завжди за тим самим посиланням і пише у відкритий прогін. Одночасно відкритий лише один.</p>
+  </header>
+
+  <section class="card now" id="now"><p class="muted">Завантаження…</p></section>
+
+  <section class="card">
+    <h2>Новий прогін</h2>
+    <form id="createForm" class="form-stack" novalidate>
+      <div class="grid2" style="margin-top:0">
+        <label class="field">
+          <span>Назва</span>
+          <input id="newName" maxlength="100" placeholder="Прогін 2 · Листопад 2026">
+        </label>
+        <div class="field">
+          <span>Після створення</span>
+          <label class="check"><input type="checkbox" id="newOpen" checked><span>Одразу відкрити для співробітників. Поточний відкритий прогін закриється.</span></label>
+        </div>
+      </div>
+      <label class="field">
+        <span>Запити, по одному в рядку</span>
+        <textarea id="newQueries" rows="7"></textarea>
+        <p class="hint">Підставлено з останнього прогону. Щоб динаміку можна було порівнювати, змінюйте формулювання лише за потреби: запит із новим написанням рахується як новий.</p>
+      </label>
+      <div class="form-actions">
+        <button class="btn" type="submit" id="createBtn">Створити прогін</button>
+        <p class="error" id="createError" role="alert"></p>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="section-head">
+      <h2>Усі прогони</h2>
+      <a class="link-btn" href="/api/export.csv">Експорт усіх прогонів у CSV</a>
+    </div>
+    <div class="table-wrap"><table class="runs" id="runs"></table></div>
+  </section>
+</main>
+<script src="/admin.js"></script>
+</body>
+</html>

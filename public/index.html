@@ -10,11 +10,18 @@
 <body>
 <main class="wrap">
   <header class="head">
-    <div class="eyebrow">Elit-Web · SEO-моніторинг</div>
+    <div class="eyebrow" id="runLabel">Elit-Web · SEO-моніторинг</div>
     <h1>Перевірка позицій <span class="nowrap">elit-web.ua</span></h1>
-    <p class="lead">Перевірте 5 запитів двічі: на смартфоні через мобільний інтернет і на комп’ютері через звичайний (дротовий / Wi‑Fi) інтернет. Займе близько 10 хвилин.</p>
+    <p class="lead" id="lead">Перевірте <span id="qCount">5 запитів</span> двічі: на смартфоні через мобільний інтернет і на комп’ютері через звичайний (дротовий / Wi‑Fi) інтернет. Займе близько 10 хвилин.</p>
   </header>
 
+  <section class="card closed hidden" id="closed">
+    <div class="closed-icon" aria-hidden="true">⏸</div>
+    <h2>Зараз перевірка не проводиться</h2>
+    <p class="muted">Посилання залишається тим самим. Коли почнеться новий прогін, форма з’явиться тут.</p>
+  </section>
+
+  <div id="content" class="hidden">
   <section class="rule" aria-labelledby="ruleTitle">
       <div class="rule-head">
         <span class="rule-icon" aria-hidden="true">!</span>
@@ -117,6 +124,7 @@
       <p class="muted small" id="draftNote">Чернетка зберігається на цьому пристрої — можна заповнювати частинами.</p>
       <button type="submit" class="btn" id="submitBtn">Надіслати результати</button>
       <p class="error" id="formError" role="alert"></p>
+      <button type="button" class="btn ghost hidden" id="reloadBtn">Оновити сторінку</button>
     </div>
   </form>
 
@@ -126,6 +134,7 @@
     <p class="muted">Якщо ви помилились, просто надішліть форму ще раз: у статистиці враховується ваш останній запис.</p>
     <button class="btn ghost" id="again" type="button">Заповнити ще раз</button>
   </section>
+  </div>
 </main>
 
 <template id="rowTpl">

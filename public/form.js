@@ -1,15 +1,38 @@
 (async function () {
-  const DRAFT_KEY = 'elit-positions-draft-v1';
+  const ME_KEY = 'elit-positions-me-v1'; // ім'я та місто пам'ятаємо між прогонами
   const form = document.getElementById('form');
   const errorEl = document.getElementById('formError');
   const btn = document.getElementById('submitBtn');
+  const reloadBtn = document.getElementById('reloadBtn');
   const tpl = document.getElementById('rowTpl');
   const citySelect = form.citySelect;
   const otherWrap = document.getElementById('cityOtherWrap');
   const OTHER = '__other';
 
-  const cfg = await fetch('/api/config').then((r) => r.json());
-  const { queries, cities, maxPosition } = cfg;
+  let cfg;
+  try {
+    cfg = await fetch('/api/config').then((r) => { if (!r.ok) throw new Error(); return r.json(); });
+  } catch (_) {
+    document.getElementById('closed').classList.remove('hidden');
+    document.querySelector('#closed h2').textContent = 'Не вдалося завантажити форму';
+    document.querySelector('#closed p').textContent = 'Перевірте інтернет і оновіть сторінку.';
+    return;
+  }
+  const { run, queries, cities, maxPosition } = cfg;
+
+  if (!run) {
+    document.getElementById('closed').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('content').classList.remove('hidden');
+  document.getElementById('runLabel').textContent = run.name;
+  const DRAFT_KEY = `elit-positions-draft-run-${run.id}`;
+
+  const plural = (n, one, few, many) => {
+    const m10 = n % 10, m100 = n % 100;
+    return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many;
+  };
+  document.getElementById('qCount').textContent = `${queries.length} ${plural(queries.length, 'запит', 'запити', 'запитів')}`;
 
   // Міста
   citySelect.innerHTML = '<option value="">— оберіть місто —</option>' +
@@ -52,9 +75,7 @@
       const c = document.querySelector(`[data-counter="${d}"]`);
       c.textContent = `${filled}/${rows.length}`;
       c.classList.toggle('ok', filled === rows.length);
-      rows.forEach((r) => {
-        r.node.classList.toggle('filled', rowFilled(r));
-      });
+      rows.forEach((r) => r.node.classList.toggle('filled', rowFilled(r)));
     }
     saveDraft();
   }
@@ -76,16 +97,24 @@
   }
 
   function saveDraft() {
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(collect())); } catch (_) {}
+    const d = collect();
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+      localStorage.setItem(ME_KEY, JSON.stringify({ employee: d.employee, citySelect: d.citySelect, cityOther: d.cityOther }));
+    } catch (_) {}
+  }
+
+  function readJSON(key) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; }
   }
 
   function loadDraft() {
-    let d;
-    try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch (_) {}
-    if (!d) return;
-    form.employee.value = d.employee || '';
-    if (cities.includes(d.citySelect) || d.citySelect === OTHER) citySelect.value = d.citySelect;
-    form.cityOther.value = d.cityOther || '';
+    const me = readJSON(ME_KEY) || {};
+    const d = readJSON(DRAFT_KEY) || {};
+    form.employee.value = d.employee || me.employee || '';
+    const sel = d.citySelect || me.citySelect;
+    if (cities.includes(sel) || sel === OTHER) citySelect.value = sel;
+    form.cityOther.value = d.cityOther || me.cityOther || '';
     otherWrap.classList.toggle('hidden', citySelect.value !== OTHER);
     form.comment.value = d.comment || '';
     for (const dev of ['mobile', 'desktop']) {
@@ -109,10 +138,12 @@
 
   form.employee.addEventListener('input', saveDraft);
   form.comment.addEventListener('input', saveDraft);
+  reloadBtn.addEventListener('click', () => location.reload());
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorEl.textContent = '';
+    reloadBtn.classList.add('hidden');
     document.querySelectorAll('.invalid').forEach((el) => el.classList.remove('invalid'));
 
     const data = collect();
@@ -127,7 +158,7 @@
       for (const r of rowsByDevice[d]) if (!rowFilled(r)) mark(r.node);
     }
     if (firstBad) {
-      errorEl.textContent = 'Заповніть усі позначені поля: для кожного запиту — позицію від 1 до 30 або «Немає в ТОП‑30».';
+      errorEl.textContent = `Заповніть усі позначені поля: для кожного запиту — позицію від 1 до ${maxPosition} або «Немає в ТОП‑${maxPosition}».`;
       firstBad.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -138,10 +169,13 @@
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employee: data.employee, city, otherCity: isOther, comment: data.comment, results: data.results }),
+        body: JSON.stringify({ runId: run.id, employee: data.employee, city, otherCity: isOther, comment: data.comment, results: data.results }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || 'Помилка сервера');
+      if (!res.ok) {
+        if (json.code === 'run_changed' || json.code === 'no_run') reloadBtn.classList.remove('hidden');
+        throw new Error(json.error || 'Помилка сервера');
+      }
       clearDraftFields();
       form.classList.add('hidden');
       document.getElementById('done').classList.remove('hidden');
